@@ -73,7 +73,7 @@ class DataAggregationTask(Process):
         all_tables = []
 
         while True:
-            time.sleep(0.3) # Ждем пока очередь заполнится
+            time.sleep(0.5) # Ждем пока очередь заполнится
             analyze_city = self.queue.get()
             print(f'{analyze_city} city received from the queue.')
 
