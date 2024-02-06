@@ -1,13 +1,15 @@
 import json
-import os
 import logging
-import pandas as pd
+import os
 import subprocess
 import time
 from multiprocessing import Process, Queue
+
+import pandas as pd
+
 from external.client import YandexWeatherAPI
-from concurrent.futures import ThreadPoolExecutor
-from utils import get_url_by_city_name, CITIES
+from utils import get_url_by_city_name
+
 
 
 class DataFetchingTask:
@@ -32,10 +34,10 @@ class DataFetchingTask:
 
 
 class DataCalculationTask(Process):
-    def __init__(self, queue: Queue) -> None:
+    def __init__(self, script_path, queue: Queue) -> None:
         super().__init__()
         self.queue = queue
-        self.script_path = 'external/analyzer.py'
+        self.script_path = script_path
         self.input_folder = 'json_cities'
         self.output_folder = 'analyzed_cities'
     
@@ -111,21 +113,3 @@ class DataAnalyzingTask:
         print(f'{favorable_city} is the most favorable for travel')
         logging.info(f'The most favorable city was determined - {favorable_city}.'  \
                      f' Average temperature is {temp_avg} and time without precipitation is {relevant_cond_hours}.')
-
-
-if __name__ == '__main__':
-    format = '%(asctime)s: %(message)s'
-    logging.basicConfig(format=format, level=logging.INFO, datefmt='%H:%M:%S')
-
-    with ThreadPoolExecutor() as pool:
-        results = pool.map(DataFetchingTask().create_json, CITIES)
-
-    queue = Queue()
-    process_producer = DataCalculationTask(queue)
-    process_consumer = DataAggregationTask(queue)
-    process_producer.start()
-    process_consumer.start()
-    process_producer.join()
-    process_consumer.join() 
-
-    DataAnalyzingTask().get_favorable_city()

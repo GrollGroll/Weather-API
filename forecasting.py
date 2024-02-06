@@ -1,29 +1,29 @@
-# import logging
-# import threading
-# import subprocess
-# import multiprocessing
+import logging
+from multiprocessing import Queue
+from concurrent.futures import ThreadPoolExecutor
 
-
-from external.client import YandexWeatherAPI
 from tasks import (
     DataFetchingTask,
     DataCalculationTask,
     DataAggregationTask,
     DataAnalyzingTask,
 )
-from utils import CITIES, get_url_by_city_name
+from utils import CITIES
 
+if __name__ == '__main__':
+    format = '%(asctime)s: %(message)s'
+    logging.basicConfig(format=format, level=logging.INFO, datefmt='%H:%M:%S')
 
-def forecast_weather():
-    """
-    Анализ погодных условий по городам
-    """
-    # city_name = "MOSCOW"
-    # url_with_data = get_url_by_city_name(city_name)
-    # resp = YandexWeatherAPI.get_forecasting(url_with_data)
-    # print(resp)
-    pass
+    with ThreadPoolExecutor() as pool:
+        results = pool.map(DataFetchingTask().create_json, CITIES)
 
+    queue = Queue()
+    script_path = 'external/analyzer.py'
+    process_producer = DataCalculationTask(script_path, queue)
+    process_consumer = DataAggregationTask(queue)
+    process_producer.start()
+    process_consumer.start()
+    process_producer.join()
+    process_consumer.join() 
 
-if __name__ == "__main__":
-    forecast_weather()
+    DataAnalyzingTask().get_favorable_city()

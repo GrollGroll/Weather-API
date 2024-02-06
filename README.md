@@ -110,3 +110,7 @@ city_name = "MOSCOW"
 url_with_data = get_url_by_city_name(city_name)
 resp = YandexWeatherAPI.get_forecasting(data_url)
 ```
+
+## Запуск проекта
+
+python forecasting.py
